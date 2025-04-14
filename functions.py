@@ -19,7 +19,7 @@ def format_day():
 
 def custom_format():
     time_struct = time.localtime(today)
-    formatted_time = time.strftime("%H_%M_%d_%m_%Y", time_struct)
+    formatted_time = time.strftime("%Y_%m_%d_%H_%M", time_struct)
     return formatted_time
 
 def update_duration(duration_calculation, window_name, dictionary):
