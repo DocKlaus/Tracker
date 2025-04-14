@@ -34,7 +34,10 @@ def create_report(start, end, window_name, dictionary):
     update_duration(duration, window_name, dictionary)
 
     with open(f'time_based_report_{custom_format()}.txt', 'a', encoding='utf-8') as file:
-        file.write(f'{format_time(start)}-{format_time(end)} : {window_name}\n')
+        if window_name:
+            file.write(f'{format_time(start)}-{format_time(end)} : {window_name}\n')
+        else:
+            file.write(f'{format_time(start)}-{format_time(end)} : Desktop\n')
 
 
 def create_structural_dict():
