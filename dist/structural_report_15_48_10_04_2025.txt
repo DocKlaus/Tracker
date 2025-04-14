@@ -1,0 +1,10 @@
+C:\projects\Order.01\py\dist\main.exe : 0:00:11
+time_based_report_15_48_10_04_2025.txt — Блокнот : 0:00:15
+dist : 0:00:16
+C:\projects\Order.01\py\dist\time_based_report_15_48_10_04_2025.txt - Notepad++ : 0:02:00
+Обновление файла : 0:00:09
+Яндекс.Музыка : 0:00:02
+One Punch Man ‎- Яндекс.Музыка : 0:00:05
+Переключение задач : 0:00:05
+Чат с Алисой и YaGPT — генерируйте тексты, изображения и новые идеи - Google Chrome : 0:00:21
+Order.01 : 0:00:05
