@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from functions import format_day, get_active_window_title, create_report, custom_format, create_structural_report
+from functions import format_day, get_active_window_title, create_report, custom_format, create_structural_report, resumption_activity
 import atexit
 import ctypes
 import sys
@@ -28,6 +28,7 @@ try:
     print('Отслеживание активных окон...\n')
     print('Нажмите Ctrl+C для завершения процесса и создания структурного отчёта')
     while True:
+        check_activity = resumption_activity()
         new_window = get_active_window_title()
         
         if current_window is None:
@@ -39,6 +40,10 @@ try:
                 create_report(start_time, end_time, current_window, dictionary)
                 start_time = time.time()
         
+        if check_activity:
+            with open(f'time_based_report_{custom_format()}.txt', 'a', encoding='utf-8') as file:
+                file.write(f'{check_activity} : Время AFK\n')
+
         current_window = new_window
         time.sleep(1)
 

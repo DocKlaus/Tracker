@@ -1,8 +1,13 @@
 import time
 from datetime import datetime
 import win32gui
+import pyautogui
 
 today = time.time()
+current_cursor_coordinates = []
+afk_count = 0
+start_afk = 0
+end_afk = 0
 
 def get_active_window_title():
     window_handle = win32gui.GetForegroundWindow()
@@ -27,6 +32,41 @@ def update_duration(duration_calculation, window_name, dictionary):
         dictionary[window_name] = duration_calculation
     else:
         dictionary[window_name] += duration_calculation
+
+def checking_cursor_movement():
+    global current_cursor_coordinates 
+    new_cursor_coordinates = pyautogui.position()
+    if not current_cursor_coordinates:
+        current_cursor_coordinates = new_cursor_coordinates
+        return False
+    if current_cursor_coordinates != new_cursor_coordinates:
+        current_cursor_coordinates = new_cursor_coordinates
+        return False
+    
+    return True
+    
+def afk_counter():
+    global afk_count
+    if checking_cursor_movement():
+        afk_count += 1
+    else:
+        afk_count = 0
+
+def checking_afk():
+    global afk_count, start_afk
+    if afk_count > 180:
+        start_afk = time.time() - afk_count
+        return True
+    
+def resumption_activity():
+    global end_afk, start_afk
+    fixed_afk = checking_afk()
+    afk_counter()
+    if not checking_afk() and fixed_afk: 
+        end_afk = time.time()
+        return f'{format_time(start_afk)}-{format_time(end_afk)}'
+    else:
+        return False
 
 
 def create_report(start, end, window_name, dictionary):
