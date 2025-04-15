@@ -2,6 +2,8 @@ import time
 from datetime import datetime
 import win32gui
 import pyautogui
+import win32process
+import psutil
 
 today = time.time()
 current_cursor_coordinates = []
@@ -9,10 +11,25 @@ afk_count = 0
 start_afk = 0
 end_afk = 0
 
-def get_active_window_title():
-    window_handle = win32gui.GetForegroundWindow()
-    window_title = win32gui.GetWindowText(window_handle)
-    return window_title
+
+def get_active_window_info():
+    # Получаем дескриптор активного окна
+    window_handle = win32gui.GetForegroundWindow()    
+    # Получаем заголовок окна
+    window_title = win32gui.GetWindowText(window_handle)    
+    # Получаем PID процесса
+    _, pid = win32process.GetWindowThreadProcessId(window_handle)    
+    # Получаем информацию о процессе
+    process = psutil.Process(pid)
+    process_name = process.name()
+    process_path = process.exe()
+    
+    return {
+        'window title': window_title,
+        'pid': pid,
+        'process name': process_name,
+        'process path': process_path
+    }
 
 def format_time(time_unix):
     time_struct = time.localtime(time_unix)

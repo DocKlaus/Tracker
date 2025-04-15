@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from functions import format_day, get_active_window_title, create_report, custom_format, create_structural_report, resumption_activity
+from functions import format_day, get_active_window_info, create_report, custom_format, create_structural_report, resumption_activity
 import atexit
 import ctypes
 import sys
@@ -9,6 +9,7 @@ dictionary = {}
 current_window = None
 start_time = None
 
+#  Создаём файл для повременного отчёта
 with open(f'time_based_report_{custom_format()}.txt', 'w', encoding='utf-8') as file:
     file.write(f'Отчёт {format_day()}\n')
 print(f'Программа запущена. Дата: {format_day()}')
@@ -29,8 +30,11 @@ try:
     print('Нажмите Ctrl+C для завершения процесса и создания структурного отчёта')
     while True:
         check_activity = resumption_activity()
-        new_window = get_active_window_title()
-        
+
+        # Получаем инфо по активному окну
+        new_window, pid, process_name, process_path = get_active_window_info()
+
+        # Отслеживание активного окна
         if current_window is None:
             start_time = time.time()
         
@@ -49,6 +53,7 @@ try:
 
 except KeyboardInterrupt: 
     print("\nПрограмма остановлена пользователем")
+
 
 
 
