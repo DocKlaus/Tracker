@@ -2,7 +2,6 @@
 import time
 from datetime import datetime
 import atexit
-import custom_sorting
 
 # Пользовательские функции
 from functions import (
@@ -67,7 +66,7 @@ print(
     sep='\n'
 )
 
-try:
+try: 
     # Бесконечный цикл для постоянного отслеживания активности
     print(f'Идёт отслеживание процессов')
     while True:
@@ -110,9 +109,6 @@ try:
                 
                 start_time = time.time() # Обновляем начальное время
         
-
-
-
         # Обновляем текущие значения
         current_window = active_window_name
         current_process = active_process_name
@@ -122,3 +118,8 @@ try:
 
 except KeyboardInterrupt: 
     print("\nПрограмма остановлена пользователем")
+
+except Exception as e:
+    with open(f'Отчёт об ошибках {format_time(time.time())}', 'a', encoding = 'utf-8') as file:
+        file.write(f'Окончание работы программы. Причина: {e}')
+    

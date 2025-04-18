@@ -74,10 +74,11 @@ def get_config_info(config_file):
             }
     
     except FileNotFoundError:
-        with open(f'Отчёт об ошибках {custom_format()}', 'a', encoding = 'utf-8') as file:
+        with open(f'Отчёт об ошибках {format_time(time.time())}', 'a', encoding = 'utf-8') as file:
             file.write(f'Файл {config_file} не найден')
     except UnicodeDecodeError:
-        print("Возможно, файл имеет другую кодировку")
+        with open(f'Отчёт об ошибках {format_time(time.time())}', 'a', encoding = 'utf-8') as file:
+            file.write("Возможно, файл имеет другую кодировку")
 
 # Получение информации об активном окне
 def get_active_window_info():
