@@ -11,7 +11,8 @@ import pyautogui
 import psutil
 
 import pprint
-
+import os
+import traceback
 
 # Глобальные переменные для отслеживания активности
 current_window = None  # Текущее активное окно
@@ -26,59 +27,115 @@ end_afk = 0                      # Время окончания AFK
 
 today = time.time()  # Текущее время для форматирования даты
 
+# Папки
+error_dir = 'error directory'
+
 # Ориентация по разделам
-Sections = {
+sections = {
     'Steam': ['steam'],
     'Браузер': ['google', 'chrome', 'yandex'],
     'Мессенджеры': ['discord', 'telegram'],
     'Работа': ['code']
 }
 
-def get_config_info(config_file):
-    try:
-        with open(config_file, 'r', encoding = 'utf-8') as file:
-            lines = file.readlines()
-            line_iterator = iter(lines)
-            time_check_sec = None
-            time_afk = None
-            for line in line_iterator:
-                line = line.strip()
-                if 'time_check_sec' in line:
-                    time_check_sec = line.split(' = ')[1].strip()                    
-                if 'time_afk' in line:
-                    time_afk = line.split(' = ')[1].strip()
-                if time_check_sec and time_afk != None:
-                    break
-            with open(f'activity_report_{custom_format()}.txt', 'a', encoding = 'utf-8') as file:
-                if time_check_sec == None:
-                    time_check_sec = 5
-                    log = f'Параметр time_check_sec (частота опроса) установлен по умолчанию = {time_check_sec} сек.'
-                else:
-                    log = f'Параметр time_check_sec (частота опроса) установлен пользователем = {time_check_sec} сек.'
-                
-                file.write(f'{log}\n')
-                print(f'{log}')
+# Логирование ошибок
+def handle_error(message, flag_input = True, error = ''):
+    if not os.path.exists(error_dir):
+        os.makedirs(error_dir, exist_ok=True)
+    with open(f'{error_dir}/Error_report_{custom_format()}.txt', 'a', encoding='utf-8') as file:
+        file.write(f'{format_time(time.time())} {message}\n {str(error)}\n Трассировка: {traceback.format_exc()}\n')
+        print(f'{format_time(time.time())} {message}')
+    if flag_input:
+        input("Нажмите Enter для выхода...")
 
-                if time_afk == None:
-                    time_afk = 3
-                    log = f'Параметр time_afk (фиксирование простоя) установлен по умолчанию = {time_afk} мин.'
-                else:
-                    log = f'Параметр time_afk (фиксирование простоя) установлен пользователем = {time_afk} мин.'
-                
-                file.write(f'{log}\n')
-                print(f'{log}')
-       
-        return {
-            'time_check_sec': int(time_check_sec),
-            'time_afk': int(time_afk)
-            }
+# Получение информации из конфигов
+def get_config_info(config_file):
+    DEFAULT_CHECK_TIME = 5  # в секундах
+    DEFAULT_AFK_TIME = 3    # в минутах
     
-    except FileNotFoundError:
-        with open(f'Отчёт об ошибках {format_time(time.time())}', 'a', encoding = 'utf-8') as file:
-            file.write(f'Файл {config_file} не найден')
-    except UnicodeDecodeError:
-        with open(f'Отчёт об ошибках {format_time(time.time())}', 'a', encoding = 'utf-8') as file:
-            file.write("Возможно, файл имеет другую кодировку")
+    try:
+        # Читаем файл конфигурации
+        with open(config_file, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            
+        # Ищем нужные параметры
+        check_time = None
+        afk_time = None
+        for line in lines:
+            line = line.strip()
+            if 'check_time' in line:
+                check_time = line.split(': ')[1].strip()
+            if 'afk_time' in line:
+                afk_time = line.split(': ')[1].strip()
+            
+
+        # Валидируем и записываем параметры          
+        # Обработка check_time
+        if check_time is None or check_time == 0:
+            check_time = DEFAULT_CHECK_TIME
+            log_text = f'Параметр check_time установлен по умолчанию = {check_time} сек.'
+        else:
+            log_text = f'Параметр check_time установлен пользователем = {check_time} сек.'
+        print(log_text)
+        
+        # Обработка afk_time
+        if afk_time is None or afk_time == 0:
+            afk_time = DEFAULT_AFK_TIME
+            log_text = f'Параметр afk_time установлен по умолчанию = {afk_time} мин.'
+        else:
+            log_text = f'Параметр afk_time установлен пользователем = {afk_time} мин.'
+        print(log_text)
+            
+        return {
+            'check_time': float(check_time),
+            'afk_time': float(afk_time)
+        }
+    
+    except FileNotFoundError as error:
+        handle_error(f'Файл {config_file} не найден', error = error)
+        
+    except UnicodeDecodeError as error:
+        handle_error('Возможно, файл имеет другую кодировку', error = error)
+    
+    except ValueError as error:
+        if not check_time.isdigit() and not afk_time.isdigit():
+            handle_error(f'Ошибка: значение check_time: {check_time} и afk_time: {afk_time} содержaт недопустимые символы', error = error)
+        elif not afk_time.isdigit():
+            handle_error(f'Ошибка: значение afk_time: {afk_time} содержит недопустимые символы', error = error)
+        elif not check_time.isdigit():
+            handle_error(f'Ошибка: значение check_time: {check_time} содержит недопустимые символы', error = error)
+
+
+def get_dict_from_config(sections_file):
+    try:
+        # Читаем файл конфигурации
+        with open(sections_file, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+            result_dict = {}  # Создаем пустой словарь для результата
+            
+            for string, line in enumerate(lines, start=1):
+                if ':' in line:
+                    section, values = line.split(':')  # Разделяем значения по запятой
+                    section = section.strip()
+                    values = values.strip().split(',')
+                    
+                    # Очищаем каждое значение от пробелов и преобразуем к нижнему регистру
+                    values = [value.strip().lower() for value in values]
+                    
+                    if section and values:
+                        result_dict[section] = values
+                    else: 
+                        log_text = f'Строка {string} не загружена в словарь. Причина: отсутствуют значения.'
+                        handle_error(log_text, False)
+                    
+        return result_dict
+    except FileNotFoundError as error:
+        handle_error(f'Файл {sections_file} не найден', error = error)
+    except Exception as error:
+        handle_error(f'Произошла ошибка при обработке файла {sections_file}', error = error)
+        
+
+
 
 # Получение информации об активном окне
 def get_active_window_info():
@@ -95,11 +152,11 @@ def get_active_window_info():
         process_path = process.exe()
 
     except psutil.NoSuchProcess: 
-        with open(f'Отчёт об ошибках {custom_format()}', 'a', encoding = 'utf-8') as file:
-            file.write(f'process PID not found (pid={pid}) \n File "c:\\projects\\GIT\\Tracker\\functions.py"')
+        handle_error(f'{format_time(time.time())} {format_day()} process PID not found (pid={pid}) \n File "c:\\projects\\GIT\\Tracker\\functions.py"')
         process = 'Не найден. Создан отчёт об ошибке'
         process_name = 'Неизвестно'
         process_path = 'Неизвестно'
+    
     return {
         'window_title': window_title,
         'process_name': process_name,
@@ -135,10 +192,10 @@ def afk_counter():
 # Проверка состояния AFK
 def checking_afk(config_info):
     global afk_count, start_afk
-    time_afk = config_info['time_afk']
-    time_check_sec = config_info['time_check_sec']
-    if afk_count > time_afk * 60 / time_check_sec:  
-        start_afk = time.time() - afk_count * 60 / time_check_sec
+    afk_time = config_info['afk_time']
+    check_time = config_info['check_time']
+    if afk_count > afk_time * 60 / check_time:  
+        start_afk = time.time() - afk_count * 60 / check_time
         return True
     return False
     
@@ -185,13 +242,15 @@ def create_time_based_report(start_time, end_time, current_window):
 
 
 # Функция для создания структуры словаря
-def create_process_dict(process_name, window_name, process_path, start_time, end_time):
+def create_process_dict(sections_dict, active_window_info, start_time, end_time):
     global process_dict
+    window_name = active_window_info['window_title']
+    process_name = active_window_info['process_name']
+    process_path = active_window_info['process_path']
     duration = end_time - start_time
-    
     section = 'Other'
-    for subsection in Sections:
-        for name in Sections[subsection]:
+    for subsection in sections_dict:
+        for name in sections_dict[subsection]:
             if name.lower() in process_path.lower():
                 section = subsection
                 break
@@ -266,9 +325,11 @@ def sort_all_by_duration():
 
 
 # Функция для сохранения словаря в txt-файл
-def save_dict_to_txt(filename):
+def save_dict_to_txt(filename, directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory, exist_ok=True)
     sort_all_by_duration()
-    with open(filename, 'w', encoding='utf-8') as file: # Открываем файл для записи
+    with open(f'{directory}/{filename}', 'w', encoding='utf-8') as file: # Открываем файл для записи
         file.write(f'Отчёт {format_day()}\n') # Записываем заголовок с датой
         
         # Проходим по всем процессам
