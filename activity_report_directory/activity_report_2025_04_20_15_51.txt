@@ -1,0 +1,29 @@
+Отчёт 20.04.2025
+
+Раздел: Other
+Общая длительность процессов раздела: 00:00:08
+(процессы: explorer.exe)
+
+   Процесс: explorer.exe
+   Общая длительность процесса: 00:00:08
+   (окна: Tracker)
+
+       Окно: Tracker
+       Длительность: 00:00:08
+
+
+Раздел: Work
+Общая длительность процессов раздела: 00:00:07
+(процессы: Code.exe)
+
+   Процесс: Code.exe
+   Общая длительность процесса: 00:00:07
+   (окна: main.py - Tracker - Visual Studio Code, functions.py - Tracker - Visual Studio Code)
+
+       Окно: main.py - Tracker - Visual Studio Code
+       Длительность: 00:00:04
+
+       Окно: functions.py - Tracker - Visual Studio Code
+       Длительность: 00:00:03
+
+
