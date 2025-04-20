@@ -1,4 +1,0 @@
-Steam: steam
-Browser: google, chrome, yandex
-Messenger: discord, telegram
-Work: code
