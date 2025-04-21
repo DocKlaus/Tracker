@@ -6,8 +6,6 @@ import traceback
 # Пользовательские функции
 from functions import (
     get_active_window_info,
-    create_time_based_report,
-    detect_activity_resume,
     create_process_dict,
     save_dict_to_txt,
     format_filename,
@@ -16,8 +14,7 @@ from functions import (
     get_config_info,
     handle_error,
     get_dict_from_config,
-    start_time,
-    current_window
+    is_afk,
 )
 
 # Настройки программы
@@ -31,6 +28,9 @@ sections_file: str = 'sections.txt'
 config_info = get_config_info(config_file)
 sections_dict = get_dict_from_config(sections_file)
 
+# Словарь для AFK
+window_afk_info = {'window_title':'AFK', 'process_name':'AFK', 'process_path':'AFK'}
+
 # Текущая дата и время
 day: str = format_date()
 custom_date: str = format_filename()
@@ -43,6 +43,7 @@ activity_report: str = f'activity_report_{custom_date}.txt'
 if flag_time_based_report:
     time_based_report: str = f'time_based_report_{custom_date}.txt'
 
+
 # Инициализация программы
 print(
     f'Программа запущена. Дата: {day}',
@@ -53,49 +54,71 @@ print(
 if flag_time_based_report:
     print(f'Создан файл {time_based_report}')
 
+
+def recording_info(
+    info: dict,                           # Словарь с информацией о процессе
+    sections_dict: dict = sections_dict,  # Словарь секций для записи
+    start_time: float = time.time(),      # Время начала процесса
+    end_time: float = time.time(),        # Время окончания процесса
+    modifier: float = 0                   # Модификатор времени
+) -> None:
+    """
+    Функция записывает информацию о процессе в словарь и сохраняет его в файл.
+    """
+    # Корректируем время начала с учетом модификатора
+    modifier_start_time = start_time - modifier
+    
+    # Создаем словарь процесса
+    create_process_dict(sections_dict, info, modifier_start_time, end_time)
+    
+    # Сохраняем отчет в текстовый файл
+    save_dict_to_txt(activity_report, activity_report_directory)
+
+
+def update_window_info(current_info, new_info, modifier=0) -> None:
+    """
+    Обновляет информацию об активном окне, записывая предыдущую информацию
+    и начиная запись новой.
+    """
+    if current_info:                                     # Если есть текущая информация
+        recording_info(current_info, modifier=modifier)  # Записываем предыдущую
+        
+    recording_info(new_info)                             # Начинаем запись новой информации
+
 try:
     # Основной цикл отслеживания активности
     print('Идёт отслеживание процессов')
     
+    # Инициализация переменных
+    current_window_info = None  # Текущая информация об окне
+    was_afk_flag = False        # Флаг состояния AFK
+    
     while True:
-        # Получение информации об активном окне
+        # Получаем информацию об активном окне
         active_window_info = get_active_window_info()
-        active_window_name = active_window_info['window_title']
-        check_activity = detect_activity_resume(config_info)
+        
+        # Проверяем состояние AFK
+        is_afk_flag = is_afk(config_info)
         
         # Обработка состояния AFK
-        if check_activity:
-            afk_start, afk_end = check_activity
-            
-            # Запись AFK в словарь процессов
-            create_process_dict({'AFK':'AFK', 'AFK':'AFK', 'AFK':'AFK'}, active_window_info, afk_start, afk_end)
-            save_dict_to_txt(activity_report, activity_report_directory)
-            
-            if flag_time_based_report:
-                # Запись времени AFK
-                with open(time_based_report, 'a', encoding='utf-8') as file:
-                    file.write(f'{format_time(check_activity[0])}-{format_time(check_activity[1])} : Время AFK\n')
-        
-        # Обработка нового активного окна
-        elif current_window is None:
-            start_time = time.time()  # Запоминаем начальное время
-            
-        elif current_window != active_window_name:
-            if start_time:
-                end_time = time.time()  # Замеряем время окончания активности
+        if is_afk_flag:
+            if not was_afk_flag:  # Если перешли в состояние AFK
+                update_window_info(current_window_info, window_afk_info)
+                was_afk_flag = True
+            else:                 # Если уже в состоянии AFK
+                recording_info(window_afk_info, modifier=config_info['check_time'])
+        else:                     # Обработка активного состояния
+            if was_afk_flag:      # Если вышли из AFK
+                recording_info(window_afk_info, modifier=config_info['check_time'])
+                was_afk_flag = False
                 
-                # Формирование отчетов
-                create_process_dict(sections_dict, active_window_info, start_time, end_time)
-                if flag_time_based_report:
-                    create_time_based_report(start_time, end_time, current_window)
-                
-                # Сохранение данных
-                save_dict_to_txt(activity_report, activity_report_directory)
-                start_time = time.time()  # Обновляем начальное время
+            # Обновляем информацию об активном окне
+            update_window_info(current_window_info, active_window_info, modifier=config_info['check_time'])
+            
+        # Обновляем текущую информацию об окне
+        current_window_info = active_window_info
         
-        # Обновление текущего окна
-        current_window = active_window_name
-        
+        # Ждем заданное время перед следующей проверкой
         time.sleep(config_info['check_time'])
 
 except KeyboardInterrupt:

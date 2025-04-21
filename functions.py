@@ -17,7 +17,6 @@ import traceback
 from typing import Dict
 
 # Глобальные переменные для отслеживания активности
-current_window: str = None  # Текущее активное окно
 start_time: float = None    # Время начала активности
 process_dict: Dict = {}     # Словарь для хранения информации о процессах
 
@@ -35,7 +34,7 @@ def handle_error(message: str, flag_input: bool = True, error: str = '') -> None
     """
     Функция для логирования ошибок и создания отчета
     
-    Параметры:
+    Аргументы:
     message (str): сообщение об ошибке
     flag_input (bool): показывать ли приглашение для выхода
     error (str): дополнительная информация об ошибке
@@ -264,37 +263,16 @@ def is_afk(config_info: dict) -> bool:
     Возвращает:
     bool: True если пользователь AFK, иначе False
     """
-    global afk_count, start_afk
+    global afk_count
     
+    update_afk_counter()
     afk_time = config_info.get('afk_time', 3)  # значение по умолчанию 60 секунд
     check_time = config_info.get('check_time', 5)  # значение по умолчанию 30 секунд
     
     threshold = afk_time * 60 / check_time
     
     if afk_count > threshold:
-        start_afk = time.time() - afk_count * 60 / check_time
         return True
-    return False
-
-
-def detect_activity_resume(config_info: dict):
-    """
-    Определяет момент возобновления активности после AFK.
-    
-    Параметры:
-    config_info (dict): конфигурация системы
-    
-    Возвращает:
-    tuple: (время начала AFK, время окончания AFK) или False
-    """
-    global end_afk, start_afk
-    
-    was_afk = is_afk(config_info)
-    update_afk_counter()
-    
-    if not is_afk(config_info) and was_afk:
-        end_afk = time.time()
-        return start_afk, end_afk
     return False
 
 
@@ -405,6 +383,8 @@ def create_process_dict(
                 break
         if section != 'Other':
             break
+        if window_name == 'AFK':
+            section = 'AFK'
     
     # Создаем структуру по секциям, если её нет
     process_dict.setdefault(section, {
