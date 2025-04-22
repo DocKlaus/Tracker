@@ -1,6 +1,5 @@
 # Системные модули
 import time
-from datetime import datetime
 import traceback
 
 # Пользовательские функции
@@ -8,21 +7,19 @@ from functions import (
     get_active_window_info,
     create_process_dict,
     save_dict_to_txt,
-    format_filename,
-    format_time,
-    format_date,
     get_config_info,
-    handle_error,
-    get_dict_from_config,
-    is_afk,
+    get_dict_from_config
 )
+from error_handling import handle_error
+from time_formatting import format_date, format_time, format_filename
+from afk_handling import is_afk
 
 # Настройки программы
 flag_time_based_report: bool = False  # Флаг создания time_based_report
 
 # Файлы конфигурации
-config_file: str = 'config.txt'
-sections_file: str = 'sections.txt'
+config_file: str = 'config_files/config.txt'
+sections_file: str = 'config_files/sections.txt'
 
 # Загрузка конфигураций
 config_info = get_config_info(config_file)
@@ -32,8 +29,8 @@ sections_dict = get_dict_from_config(sections_file)
 window_afk_info = {'window_title':'AFK', 'process_name':'AFK', 'process_path':'AFK'}
 
 # Текущая дата и время
-day: str = format_date()
-custom_date: str = format_filename()
+day: str = format_date(time.time())
+custom_date: str = format_filename(time.time())
 
 # Директории и файлы отчетов
 time_based_report_directory: str = 'time_based_report_directory'
@@ -98,7 +95,7 @@ try:
         active_window_info = get_active_window_info()
         
         # Проверяем состояние AFK
-        is_afk_flag = is_afk(config_info)
+        is_afk_flag = is_afk(config_info, active_window_info)
         
         # Обработка состояния AFK
         if is_afk_flag:
