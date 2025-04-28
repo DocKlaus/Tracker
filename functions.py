@@ -169,7 +169,7 @@ def get_active_window_info() -> dict:
             process_path = 'Неизвестно'
         
     except psutil.NoSuchProcess:
-        he(f'{format_time(time.time())} {format_date(today)} process PID not found (pid={pid}) \n')
+        he(f'{format_time(time.time())} {format_date(today)} process PID not found (pid={pid}) \n', flag_input = False)
         process = 'Не найден. Создан отчёт об ошибке'
         process_name = 'Неизвестно'
         process_path = 'Неизвестно'
