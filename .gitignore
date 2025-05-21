@@ -1,6 +1,10 @@
+# Папки
 dist/
 build/
 __pycache__/
+icons/
+.idea/
+
+#Файлы
 test.py
-main.spec
-#
+*.spec
